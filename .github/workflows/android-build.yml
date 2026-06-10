@@ -54,6 +54,12 @@ jobs:
       - name: Install Tauri CLI
         run: cargo install tauri-cli --version 2.2.3 --locked
 
+      # ============================================
+      # الخطوة الحاسمة: إنشاء المجلد + التهيئة من الداخل
+      # ============================================
+      - name: Force create Android directory
+        run: mkdir -p src-tauri/gen/android
+
       - name: Initialize Android project
         working-directory: src-tauri
         run: cargo tauri android init --ci
@@ -62,7 +68,7 @@ jobs:
         run: cargo tauri android build --apk --ci
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/build-artifact@v4
         with:
           name: CAUSAL-ONE-APK-${{ github.run_number }}
           path: src-tauri/gen/android/app/build/outputs/apk/**/*.apk
