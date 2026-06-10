@@ -1,51 +1,38 @@
 name: Build Android APK
 
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
 
 jobs:
   build-android:
-    runs-on: ubuntu-22.04
-    timeout-minutes: 60
-
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@49933bc807db5a963ea82925d2ab1f05705af938
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - uses: actions/setup-java@ec5e8726ba43218dd3b9ff44d1601ddf806c028d
+      - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - uses: dtolnay/rust-toolchain@a42b3b09989b4bbf9ea3d9c11077cd8e2f7cb718
+      - uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-linux-android, armv7-linux-androideabi, i686-linux-android, x86_64-linux-android
 
-      - name: Install system deps
-        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
-
-      - uses: android-actions/setup-android@4b1e0668d52e89b53eab0c33a042e420206b7c0f
-
-      - name: Clean install
+      - name: Install dependencies
         run: |
-          rm -rf node_modules package-lock.json
-          npm install
-          npm list @tauri-apps/api @tauri-apps/cli
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
-      - run: npm run build
-
+      - run: npm install
       - run: cargo install tauri-cli --version 2.2.3 --locked
-
       - run: cargo tauri android init --ci
-
       - run: cargo tauri android build --apk --ci
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b94675095d8b9e4
+      - uses: actions/upload-artifact@v4
         with:
           name: causal-one-apk
           path: src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk
