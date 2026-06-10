@@ -1,7 +1,9 @@
 name: Build Android APK
 
 on:
-  workflow_dispatch:
+  push:                     # يشتغل تلقائي مع كل رفع على main
+    branches: [ main ]
+  workflow_dispatch:        # ويبقى الزر اليدوي موجود
 
 jobs:
   build-android:
