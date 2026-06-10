@@ -46,10 +46,10 @@ jobs:
         run: cargo install tauri-cli --version 2.2.3 --locked
 
       - name: Init Android project
-        run: cargo tauri android init --ci
+        run: cargo tauri android init --ci --force
 
       - name: Build APK
-        run: cargo tauri android build --apk --ci
+        run: cargo tauri android build --apk --ci --no-watch
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
