@@ -54,18 +54,21 @@ jobs:
       - name: Install Tauri CLI
         run: cargo install tauri-cli --version 2.2.3 --locked
 
-      - name: Force create Android directory
-        run: mkdir -p src-tauri/gen/android
+      # ============================================
+      # الحل النهائي: نمسح أي أثر قديم ونخلي init يبني صح
+      # ============================================
+      - name: Clean old Android project
+        run: rm -rf src-tauri/gen/android
 
       - name: Initialize Android project
         working-directory: src-tauri
-        run: cargo tauri android init --ci
+        run: cargo tauri android init --ci --force
 
       - name: Build APK
         run: cargo tauri android build --apk --ci
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4  # مصح هنا 100%
+        uses: actions/upload-artifact@v4
         with:
           name: CAUSAL-ONE-APK-${{ github.run_number }}
           path: src-tauri/gen/android/app/build/outputs/apk/**/*.apk
