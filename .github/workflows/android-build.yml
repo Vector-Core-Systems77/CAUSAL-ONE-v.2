@@ -9,107 +9,63 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     timeout-minutes: 90
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
-      - name: Setup Node.js 24
-        uses: actions/setup-node@v5
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
         with:
-          node-version: 24
-
-      - name: Fix Tauri API version
-        run: npm install @tauri-apps/api@latest --save
-
-      - name: Install dependencies
-        run: npm install
+          node-version: '20'
 
       - name: Setup Java 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK + NDK + Build Tools
+      - name: Setup Android SDK
         uses: android-actions/setup-android@v3
         with:
-          cmdline-tools-version: 11076708
           accept-android-sdk-licenses: true
-          packages: 'platforms;android-34 platform-tools ndk;25.2.9519653 build-tools;34.0.0'
-
-      - name: Set Android Env
-        run: |
-          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
-          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/25.2.9519653" >> $GITHUB_ENV
-          echo "JAVA_HOME=$JAVA_HOME" >> $GITHUB_ENV
-          mkdir -p src-tauri
-          echo "ndk.dir=$ANDROID_SDK_ROOT/ndk/25.2.9519653" > src-tauri/local.properties
-          echo "sdk.dir=$ANDROID_SDK_ROOT" >> src-tauri/local.properties
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-linux-android, armv7-linux-androideabi, x86_64-linux-android
+          targets: aarch64-linux-android, armv7-linux-androideabi, i686-linux-android, x86_64-linux-android
 
-      - name: Cache Cargo
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            src-tauri/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('src-tauri/Cargo.toml') }}
-
-      - name: Install Tauri CLI
-        run: cargo install tauri-cli --locked
-
-      - name: Install ImageMagick
-        run: sudo apt-get update && sudo apt-get install -y imagemagick
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf imagemagick
 
       - name: Create placeholder icon
         run: |
           mkdir -p src-tauri/icons
           convert -size 256x256 xc:blue -type TrueColorAlpha PNG32:src-tauri/icons/icon.png
 
+      - name: Fix Tauri API version
+        run: npm install @tauri-apps/api@^2.0.0 --save
+
+      - name: Install npm dependencies
+        run: npm install
+
       - name: Build Frontend
         run: npm run build
 
-      - name: Initialize Tauri Android Project
-        run: |
-          cd src-tauri
-          cargo tauri android init --ci --force || echo "Android project already exists"
-          cd ..
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version 2.2.3 --locked
 
-      - name: Create Debug Keystore
-        run: |
-          mkdir -p src-tauri/gen/android
-          cd src-tauri/gen/android
-          keytool -genkeypair -v -keystore debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Android Debug,O=Android,C=US" -noprompt
+      - name: Initialize Android project
+        run: cargo tauri android init --ci || echo "Android project already exists"
 
-      - name: Build Unsigned Release APK
-        run: cargo tauri android build --apk --ci --no-watch
+      - name: Build APK
+        run: cargo tauri android build --apk --ci
 
-      - name: List APK files
-        run: find src-tauri/gen/android/app/build/outputs/apk -type f -name "*.apk" -ls
-
-      - name: Sign APK
-        run: |
-          APK=$(find src-tauri/gen/android/app/build/outputs/apk -name "*release-unsigned.apk" | head -n 1)
-          echo "Signing: $APK"
-          if [ -z "$APK" ]; then
-            echo "Error: No APK found"
-            exit 1
-          fi
-          mkdir -p src-tauri/gen/android/app/build/outputs/apk/release
-          $ANDROID_SDK_ROOT/build-tools/34.0.0/apksigner sign --ks src-tauri/gen/android/debug.keystore --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android --out src-tauri/gen/android/app/build/outputs/apk/release/app-release-signed.apk "$APK"
-
-      - name: Upload Signed APK
+      - name: Find and Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: CAUSAL-ONE-APK-${{ github.run_number }}
-          path: src-tauri/gen/android/app/build/outputs/apk/release/app-release-signed.apk
+          path: src-tauri/gen/android/app/build/outputs/apk/universal/release/*.apk
           retention-days: 30
-          if-no-files-found: error
