@@ -7,6 +7,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    permissions:
+      contents: read
+      actions: write
 
     steps:
       - name: Checkout code
@@ -39,28 +42,13 @@ jobs:
       - name: Create placeholder frontend
         run: |
           mkdir -p dist
-          cat > dist/index.html << 'EOF'
-          <!DOCTYPE html>
-          <html>
-          <head><title>Causal One</title><meta charset="utf-8"></head>
-          <body>
-            <h1>Causal One - HPT Engine</h1>
-            <p>Engine loaded successfully</p>
-            <script type="module">
-              import { invoke } from '@tauri-apps/api/core'
-              invoke('get_status').then(console.log).catch(console.error)
-            </script>
-          </body>
-          </html>
-          EOF
+          echo '<!DOCTYPE html><html><head><title>Causal One</title><meta charset="utf-8"></head><body><h1>Causal One - HPT Engine</h1></body></html>' > dist/index.html
 
       - name: Install npm deps
         run: npm install @tauri-apps/api@2.2.3
-        # استخدمنا install بدل ci عشان مافي lock file
 
       - name: Build frontend
         run: npm run build
-        # هذا بيشغل vite build ويحط الملفات في dist
 
       - name: Install Tauri CLI
         run: cargo install tauri-cli --version 2.2.3 --locked
@@ -69,16 +57,16 @@ jobs:
         run: rm -rf src-tauri/gen/android
 
       - name: Init Android project
-        run: cd src-tauri && tauri android init
+        run: cd src-tauri && cargo tauri android init --ci
+        # ✅ مصح: أضفنا cargo قبل tauri
 
       - name: Create placeholder icon
         run: |
           mkdir -p src-tauri/icons
           magick -size 256x256 xc:#1a1a2e -gravity center -pointsize 80 -fill white -annotate +0+0 "C1" src-tauri/icons/icon.png
-        # استخدمنا magick بدل convert
 
       - name: Build Android APK
-        run: cd src-tauri && tauri android build --apk --ci
+        run: cargo tauri android build --apk --ci
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
