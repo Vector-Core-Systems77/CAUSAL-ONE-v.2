@@ -1,79 +1,10 @@
-name: Build CAUSAL-ONE Android APK
-
+name: Test Build
 on:
   workflow_dispatch:
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-22.04
-    timeout-minutes: 90
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Setup Java 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          accept-android-sdk-licenses: true
-
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: aarch64-linux-android, armv7-linux-androideabi, i686-linux-android, x86_64-linux-android
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf imagemagick gradle
-
-      - name: Create placeholder icon
-        run: |
-          mkdir -p src-tauri/icons
-          convert -size 256x256 xc:blue -type TrueColorAlpha PNG32:src-tauri/icons/icon.png
-
-      - name: Install npm dependencies
-        run: |
-          npm install @tauri-apps/api@^2.0.0 --save
-          npm install
-          npm run build
-
-      - name: Install Tauri CLI
-        run: cargo install tauri-cli --version 2.2.3 --locked
-
-      - name: Show tauri.conf.json
-        run: cat src-tauri/tauri.conf.json
-        # عشان نتأكد الـ identifier موجود وصح
-
-      - name: Remove broken Android project
-        run: rm -rf src-tauri/gen
-
-      - name: Initialize Android project
-        working-directory: src-tauri
-        run: cargo tauri android init --ci
-
-      - name: List gen folder after init
-        run: ls -la src-tauri/gen || echo "gen folder not created"
-        # هنا بنشوف هل init سوى شي ولا لا
-
-      - name: Build APK
-        run: cargo tauri android build --apk --ci
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: CAUSAL-ONE-APK-${{ github.run_number }}
-          path: src-tauri/gen/android/app/build/outputs/apk/**/*.apk
-          retention-days: 30
-          if-no-files-found: error
+      - name: Hello
+        run: echo "الملف ظهر! الحمد لله"
