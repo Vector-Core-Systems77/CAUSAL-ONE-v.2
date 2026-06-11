@@ -2,6 +2,9 @@ name: Build Android APK
 
 on:
   workflow_dispatch:
+  push:
+    branches: [ main ]
+    # الآن بيشتغل لحاله مع كل push + تقدر تشغله يدوي
 
 jobs:
   build:
@@ -29,7 +32,7 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-linux-android, armv7-linux-androideabi, i686-linux-android, x86_64-linux-android
+          targets: aarch64-linux-android, armv7-linux-androideabi, i686-linux-android, x86_dart-android
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -58,7 +61,6 @@ jobs:
 
       - name: Init Android project
         run: cd src-tauri && cargo tauri android init --ci
-        # ✅ مصح: أضفنا cargo قبل tauri
 
       - name: Create placeholder icon
         run: |
