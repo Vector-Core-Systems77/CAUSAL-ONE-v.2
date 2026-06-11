@@ -2,8 +2,6 @@ name: Build CAUSAL-ONE Android APK
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ main ]
 
 jobs:
   build:
@@ -54,13 +52,20 @@ jobs:
       - name: Install Tauri CLI
         run: cargo install tauri-cli --version 2.2.3 --locked
 
-      # الحل القاطع
+      - name: Show tauri.conf.json
+        run: cat src-tauri/tauri.conf.json
+        # عشان نتأكد الـ identifier موجود وصح
+
       - name: Remove broken Android project
-        run: rm -rf src-tauri/gen/android
+        run: rm -rf src-tauri/gen
 
       - name: Initialize Android project
         working-directory: src-tauri
         run: cargo tauri android init --ci
+
+      - name: List gen folder after init
+        run: ls -la src-tauri/gen || echo "gen folder not created"
+        # هنا بنشوف هل init سوى شي ولا لا
 
       - name: Build APK
         run: cargo tauri android build --apk --ci
