@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Causal One",
+  "productName": "CausalOne",
   "version": "0.1.0",
   "identifier": "com.causal.one",
   "build": {
