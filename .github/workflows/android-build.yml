@@ -54,15 +54,13 @@ jobs:
       - name: Install Tauri CLI
         run: cargo install tauri-cli --version 2.2.3 --locked
 
-      # ============================================
-      # الحل النهائي: نمسح أي أثر قديم ونخلي init يبني صح
-      # ============================================
-      - name: Clean old Android project
+      # الحل القاطع
+      - name: Remove broken Android project
         run: rm -rf src-tauri/gen/android
 
       - name: Initialize Android project
         working-directory: src-tauri
-        run: cargo tauri android init --ci --force
+        run: cargo tauri android init --ci
 
       - name: Build APK
         run: cargo tauri android build --apk --ci
